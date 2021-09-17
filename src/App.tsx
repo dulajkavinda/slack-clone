@@ -1,87 +1,74 @@
 import React, { useEffect, useState } from "react";
 import "./App.css";
-import Button from "@mui/material/Button";
-import TextField from "@mui/material/TextField";
-import List from "@mui/material/List";
-import ListItem from "@mui/material/ListItem";
-import ListItemText from "@mui/material/ListItemText";
-import { styled } from "@mui/material/styles";
 import { io, Socket } from "socket.io-client";
 
-interface IMessage {
-  data: String;
+import Sidebar from "./components/Sidebar";
+
+interface INamespace {
+  img: string;
+  endpoint: string;
 }
 
-function App() {
+export default function App() {
+  const [username, setUserName] = useState<String | null>("");
   const [message, setMessage] = useState("");
-  const [chat, setChat] = useState<Array<IMessage>>([]);
+  const [chat, setChat] = useState<Array<String>>([]);
+  const [namespaces, setNamesapces] = useState<INamespace[]>([]);
 
-  const socket: Socket = io("http://localhost:8000");
-  const socket_admin: Socket = io("http://localhost:8000/admin");
-
-  const send = () => {
-    socket.emit("messageToServer", { data: message });
-  };
+  const socket_main: Socket = io("http://localhost:8000");
+  const socket_wiki: Socket = io("http://localhost:8000/wiki");
+  const socket_mozilla: Socket = io("http://localhost:8000/mozilla");
+  const socket_linux: Socket = io("http://localhost:8000/linux");
 
   useEffect(() => {
-    socket.on("messageFromServer", (data: IMessage) => {
-      setChat([...chat, data]);
-      console.log(data);
-    });
+    // let user = prompt("Enter the username: ");
+    // setUserName(user);
 
-    socket.on("joined", (data: IMessage) => {
-      console.log(data);
-    });
-
-    socket_admin.on("welcome", (data: IMessage) => {
-      console.log(data);
+    socket_main.on("nsList", (nsData) => {
+      setNamesapces(nsData);
     });
   }, []);
 
-  const Demo = styled("div")(({ theme }) => ({
-    backgroundColor: theme.palette.background.paper,
-  }));
+  const send = () => {
+    setChat([...chat, message]);
+    console.log("send");
+  };
 
   return (
-    <div className="App">
-      <h1>welcome to chat</h1>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-around",
-          alignItems: "center",
-        }}
-      >
-        <TextField
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          id="outlined-basic"
-          label="Outlined"
-          variant="outlined"
-        />
-        <Button onClick={send} variant="contained">
-          send
-        </Button>
+    <div className="main">
+      <Sidebar namespaceList={namespaces} />
+      <div className="rooms">
+        <h2>Rooms</h2>
+        <div>
+          <ul>
+            <li>#room1</li>
+            <li>#room2</li>
+            <li>#room3</li>
+            <li>#room4</li>
+          </ul>
+        </div>
       </div>
-
-      <Demo>
-        <List dense={false}>
+      <div className="chat">
+        <div className="chats">
           {chat.map((msg, index) => {
             return (
-              <ListItem
-                style={{
-                  backgroundColor: index % 2 === 0 ? "lightgray" : "white",
-                  borderRadius: "10px",
-                }}
-              >
-                <ListItemText>{msg.data}</ListItemText>
-              </ListItem>
+              <li key={index}>
+                {username}: {msg}
+              </li>
             );
           })}
-        </List>
-      </Demo>
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-between" }}>
+          <input
+            onChange={(e) => setMessage(e.target.value)}
+            type="text"
+            style={{ width: "80%", height: "40px" }}
+          />
+          <button onClick={send} style={{ width: "18%" }}>
+            send
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
-
-export default App;

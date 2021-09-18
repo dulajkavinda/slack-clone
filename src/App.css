@@ -35,6 +35,11 @@
   width: 70px;
 
   background-color: white;
+  cursor: pointer;
+}
+
+.namesapce:hover {
+  opacity: 0.6;
 }
 
 .rooms {
